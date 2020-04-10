@@ -1,19 +1,27 @@
 #import "RNTFS.h"
 #include <CommonCrypto/CommonDigest.h>
 
+NSString *ERROR_CODE_FILE_NOT_FOUND = @"1";
+
 BOOL checkFileExisted(NSString *path, RCTPromiseRejectBlock reject) {
     BOOL existed = [NSFileManager.defaultManager fileExistsAtPath:path];
     if (!existed) {
-        reject(@"1", @"file is not found.", nil);
+        reject(ERROR_CODE_FILE_NOT_FOUND, @"file is not found.", nil);
         return false;
     }
     return true;
 }
 
-@implementation RNTStatusBar
+@implementation RNTFS
 
 - (dispatch_queue_t)methodQueue {
-  return dispatch_queue_create("com.github.ReactNativeHero.fs", DISPATCH_QUEUE_SERIAL);
+  return dispatch_queue_create("com.github.reactnativehero.fs", DISPATCH_QUEUE_SERIAL);
+}
+
+- (NSDictionary *)constantsToExport {
+    return @{
+        @"ERROR_CODE_FILE_NOT_FOUND": ERROR_CODE_FILE_NOT_FOUND,
+    };
 }
 
 RCT_EXPORT_MODULE(RNTFS);
@@ -22,9 +30,9 @@ RCT_EXPORT_METHOD(exists:(NSString *)path resolve:(RCTPromiseResolveBlock)resolv
 
     BOOL result = [NSFileManager.defaultManager fileExistsAtPath:path];
     
-    resolve(@[
-        @(result)
-    ]);
+    resolve(@{
+        @"exists": @(result),
+    });
     
 }
 
@@ -51,9 +59,9 @@ RCT_EXPORT_METHOD(unlink:(NSString *)path resolve:(RCTPromiseResolveBlock)resolv
     
     BOOL result = [NSFileManager.defaultManager removeItemAtPath:path error:nil];
     
-    resolve(@[
-        @(result)
-    ]);
+    resolve(@{
+        @"success": @(result),
+    });
     
 }
 
@@ -75,9 +83,9 @@ RCT_EXPORT_METHOD(md5:(NSString *)path resolve:(RCTPromiseResolveBlock)resolve r
         [result appendFormat:@"%02x", digest[i]];
     }
     
-    resolve(@[
-        result
-    ]);
+    resolve(@{
+        @"md5": result,
+    });
     
 }
 

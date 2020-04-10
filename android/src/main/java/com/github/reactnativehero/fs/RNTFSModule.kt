@@ -5,11 +5,26 @@ import java.io.*
 import java.math.BigInteger
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
+import java.util.HashMap
 
 class RNTFSModule(private val reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
 
+    companion object {
+        private const val ERROR_CODE_FILE_NOT_FOUND = "1"
+    }
+
     override fun getName(): String {
         return "RNTFS"
+    }
+
+    override fun getConstants(): Map<String, Any>? {
+
+        val constants: MutableMap<String, Any> = HashMap()
+
+        constants["ERROR_CODE_FILE_NOT_FOUND"] = ERROR_CODE_FILE_NOT_FOUND
+
+        return constants
+
     }
 
     @ReactMethod
@@ -17,10 +32,10 @@ class RNTFSModule(private val reactContext: ReactApplicationContext) : ReactCont
 
         val file = File(path)
 
-        val list = Arguments.createArray()
-        list.pushBoolean(file.exists())
+        val map = Arguments.createMap()
+        map.putBoolean("existed", file.exists())
 
-        promise.resolve(list)
+        promise.resolve(map)
 
     }
 
@@ -50,10 +65,10 @@ class RNTFSModule(private val reactContext: ReactApplicationContext) : ReactCont
             return
         }
 
-        val list = Arguments.createArray()
-        list.pushBoolean(file.deleteRecursively())
+        val map = Arguments.createMap()
+        map.putBoolean("success", file.deleteRecursively())
 
-        promise.resolve(list)
+        promise.resolve(map)
 
     }
 
@@ -89,14 +104,15 @@ class RNTFSModule(private val reactContext: ReactApplicationContext) : ReactCont
             }
             val md5sum = digest.digest()
             val bigInt = BigInteger(1, md5sum)
-            var result = bigInt.toString(16)
-            // Fill to 32 chars
-            result = String.format("%32s", result).replace(' ', '0')
+            val result = bigInt.toString(16)
 
-            val list = Arguments.createArray()
-            list.pushString(result)
+            val map = Arguments.createMap()
+            map.putString(
+                "md5",
+                String.format("%32s", result).replace(' ', '0')
+            )
 
-            promise.resolve(list)
+            promise.resolve(map)
 
         }
         catch (e: IOException) {
@@ -115,7 +131,7 @@ class RNTFSModule(private val reactContext: ReactApplicationContext) : ReactCont
     private fun checkFileExisted(file: File, promise: Promise): Boolean {
 
         if (!file.exists()) {
-            promise.reject("1", "file is not found.")
+            promise.reject(ERROR_CODE_FILE_NOT_FOUND, "file is not found.")
             return false
         }
 

@@ -3,6 +3,8 @@ import { NativeModules } from 'react-native'
 
 const { RNTFS } = NativeModules
 
+export const ERROR_CODE_FILE_NOT_FOUND = RNTFS.ERROR_CODE_FILE_NOT_FOUND
+
 export default {
 
   /**
