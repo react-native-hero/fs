@@ -3,38 +3,39 @@ import { NativeModules } from 'react-native'
 
 const { RNTFS } = NativeModules
 
-export const DIRECTORY_CACHE = RNTFS.DIRECTORY_CACHE
-export const DIRECTORY_DOCUMENT = RNTFS.DIRECTORY_DOCUMENT
-export const ERROR_CODE_FILE_NOT_FOUND = RNTFS.ERROR_CODE_FILE_NOT_FOUND
+export const CODE = {
+  FILE_NOT_FOUND: RNTFS.ERROR_CODE_FILE_NOT_FOUND,
+}
 
-export default {
+export const DIRECTORY = {
+  CACHE: RNTFS.DIRECTORY_CACHE,
+  DOCUMENT: RNTFS.DIRECTORY_DOCUMENT,
+}
 
-  /**
-   * 判断文件是否存在
-   */
-  exists(path) {
-    return RNTFS.exists(path)
-  },
+/**
+ * 判断文件是否存在
+ */
+export function exists(path) {
+  return RNTFS.exists(path)
+}
 
-  /**
-   * 获取文件信息
-   */
-  stat(path) {
-    return RNTFS.stat(path)
-  },
+/**
+ * 获取文件信息
+ */
+export function stat(path) {
+  return RNTFS.stat(path)
+}
 
-  /**
-   * 删除文件
-   */
-  unlink(path) {
-    return RNTFS.unlink(path)
-  },
+/**
+ * 删除文件
+ */
+export function unlink(path) {
+  return RNTFS.unlink(path)
+}
 
-  /**
-   * 获取文件 md5
-   */
-  md5(path) {
-    return RNTFS.md5(path)
-  },
-
+/**
+ * 获取文件 md5
+ */
+export function md5(path) {
+  return RNTFS.md5(path)
 }

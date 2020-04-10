@@ -39,43 +39,46 @@ $ react-native link @react-native-hero/fs
 ## Example
 
 ```js
-import FS, {
-  DIRECTORY_CACHE,
-  DIRECTORY_DOCUMENT,
-  ERROR_CODE_FILE_NOT_FOUND,
+import {
+  CODE,
+  DIRECTORY,
+  exists,
+  unlink,
+  stat,
+  md5,
 } from '@react-native-hero/fs'
 
-FS.exists(path).then(data => {
+exists(path).then(data => {
   if (data.exists) {
 
   }
 })
 
-FS.unlink(path).then(data => {
+stat(path).then(data => {
+  data.size
+})
+.catch(err => {
+  if (err.code === CODE.FILE_NOT_FOUND) {
+    console.log('file is not found')
+  }
+})
+
+unlink(path).then(data => {
   if (data.success) {
 
   }
 })
 .catch(err => {
-  if (err.code === ERROR_CODE_FILE_NOT_FOUND) {
+  if (err.code === CODE.FILE_NOT_FOUND) {
     console.log('file is not found')
   }
 })
 
-FS.stat(path).then(data => {
-  data.size
-})
-.catch(err => {
-  if (err.code === ERROR_CODE_FILE_NOT_FOUND) {
-    console.log('file is not found')
-  }
-})
-
-FS.md5(path).then(data => {
+md5(path).then(data => {
   data.md5
 })
 .catch(err => {
-  if (err.code === ERROR_CODE_FILE_NOT_FOUND) {
+  if (err.code === CODE.FILE_NOT_FOUND) {
     console.log('file is not found')
   }
 })
