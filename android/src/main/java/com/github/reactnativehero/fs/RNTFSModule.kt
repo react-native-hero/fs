@@ -5,7 +5,7 @@ import java.io.*
 import java.math.BigInteger
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
-import java.util.HashMap
+import java.util.*
 
 class RNTFSModule(private val reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
 
@@ -20,6 +20,9 @@ class RNTFSModule(private val reactContext: ReactApplicationContext) : ReactCont
     override fun getConstants(): Map<String, Any>? {
 
         val constants: MutableMap<String, Any> = HashMap()
+
+        constants["DIRECTORY_CACHE"] = reactContext.cacheDir.absolutePath
+        constants["DIRECTORY_DOCUMENT"] = reactContext.filesDir.absolutePath
 
         constants["ERROR_CODE_FILE_NOT_FOUND"] = ERROR_CODE_FILE_NOT_FOUND
 
@@ -50,8 +53,8 @@ class RNTFSModule(private val reactContext: ReactApplicationContext) : ReactCont
 
         val map = Arguments.createMap()
         map.putInt("size", file.length().toInt())
-        map.putInt("mtime", file.lastModified().toInt())
-
+        // 如果用 toInt，貌似结果是错的
+        map.putString("mtime", file.lastModified().toString())
         promise.resolve(map)
 
     }

@@ -14,12 +14,18 @@ BOOL checkFileExisted(NSString *path, RCTPromiseRejectBlock reject) {
 
 @implementation RNTFS
 
++ (BOOL)requiresMainQueueSetup {
+    return YES;
+}
+
 - (dispatch_queue_t)methodQueue {
-  return dispatch_queue_create("com.github.reactnativehero.fs", DISPATCH_QUEUE_SERIAL);
+    return dispatch_queue_create("com.github.reactnativehero.fs", DISPATCH_QUEUE_SERIAL);
 }
 
 - (NSDictionary *)constantsToExport {
     return @{
+        @"DIRECTORY_CACHE": [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject],
+        @"DIRECTORY_DOCUMENT": [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject],
         @"ERROR_CODE_FILE_NOT_FOUND": ERROR_CODE_FILE_NOT_FOUND,
     };
 }
@@ -44,9 +50,11 @@ RCT_EXPORT_METHOD(stat:(NSString *)path resolve:(RCTPromiseResolveBlock)resolve 
     
     NSDictionary *attrs = [NSFileManager.defaultManager attributesOfItemAtPath:path error:nil];
 
+    double ms = floor(attrs.fileModificationDate.timeIntervalSince1970 * 1000);
+    
     resolve(@{
         @"size": @(attrs.fileSize),
-        @"mtime": @(attrs.fileModificationDate.timeIntervalSince1970 * 1000),
+        @"mtime": [NSString stringWithFormat:@"%.0f", ms],
     });
     
 }

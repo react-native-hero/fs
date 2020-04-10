@@ -40,6 +40,8 @@ $ react-native link @react-native-hero/fs
 
 ```js
 import FS, {
+  DIRECTORY_CACHE,
+  DIRECTORY_DOCUMENT,
   ERROR_CODE_FILE_NOT_FOUND,
 } from '@react-native-hero/fs'
 
