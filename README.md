@@ -55,6 +55,7 @@ exists(path).then(data => {
 })
 
 stat(path).then(data => {
+  data.name
   data.size
 })
 .catch(err => {
@@ -80,6 +81,20 @@ md5(path).then(data => {
 .catch(err => {
   if (err.code === CODE.FILE_NOT_FOUND) {
     console.log('file is not found')
+  }
+})
+
+// android only
+scan({
+  path: '/xx/xx.jpg',
+  mimeType: 'image/jpeg',
+})
+.then(data => {
+  data.path
+})
+.catch(err => {
+  if (err.code === CODE.SCANNER_NOT_CONNECTED) {
+    console.log('scanner is not connected.')
   }
 })
 ```

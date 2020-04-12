@@ -26,6 +26,12 @@ BOOL checkFileExisted(NSString *path, RCTPromiseRejectBlock reject) {
     return @{
         @"DIRECTORY_CACHE": [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject],
         @"DIRECTORY_DOCUMENT": [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject],
+        
+        @"DIRECTORY_DOWNLOAD": [NSSearchPathForDirectoriesInDomains(NSDownloadsDirectory, NSUserDomainMask, YES) firstObject],
+        @"DIRECTORY_PICTURE": [NSSearchPathForDirectoriesInDomains(NSPicturesDirectory, NSUserDomainMask, YES) firstObject],
+        @"DIRECTORY_MUSIC": [NSSearchPathForDirectoriesInDomains(NSMusicDirectory, NSUserDomainMask, YES) firstObject],
+        @"DIRECTORY_MOVIE": [NSSearchPathForDirectoriesInDomains(NSMoviesDirectory, NSUserDomainMask, YES) firstObject],
+        
         @"ERROR_CODE_FILE_NOT_FOUND": ERROR_CODE_FILE_NOT_FOUND,
     };
 }
@@ -53,6 +59,7 @@ RCT_EXPORT_METHOD(stat:(NSString *)path resolve:(RCTPromiseResolveBlock)resolve 
     double ms = floor(attrs.fileModificationDate.timeIntervalSince1970 * 1000);
     
     resolve(@{
+        @"name": path.lastPathComponent,
         @"size": @(attrs.fileSize),
         @"mtime": [NSString stringWithFormat:@"%.0f", ms],
     });

@@ -1,5 +1,8 @@
 package com.github.reactnativehero.fs
 
+import android.media.MediaScannerConnection
+import android.net.Uri
+import android.os.Environment
 import com.facebook.react.bridge.*
 import java.io.*
 import java.math.BigInteger
@@ -11,6 +14,36 @@ class RNTFSModule(private val reactContext: ReactApplicationContext) : ReactCont
 
     companion object {
         private const val ERROR_CODE_FILE_NOT_FOUND = "1"
+        private const val ERROR_CODE_MD5_ALGORITHM_NOT_FOUND = "2"
+        private const val ERROR_CODE_MD5_CALCULATE_FAILURE = "3"
+        private const val ERROR_CODE_SCANNER_NOT_CONNECTED = "4"
+    }
+
+    private var scanner: MediaScannerConnection
+    private var scanTasks = hashMapOf<String, Promise>()
+
+    init {
+        scanner = MediaScannerConnection(reactContext, object : MediaScannerConnection.MediaScannerConnectionClient {
+            override fun onMediaScannerConnected() {
+
+            }
+
+            override fun onScanCompleted(path: String, uri: Uri?) {
+                if (scanTasks.contains(path)) {
+                    val promise = scanTasks[path]
+                    val map = Arguments.createMap()
+                    map.putString("path", path)
+                    promise?.resolve(map)
+                    scanTasks.remove(path)
+                }
+            }
+        })
+        scanner.connect()
+    }
+
+    override fun onCatalystInstanceDestroy() {
+        super.onCatalystInstanceDestroy()
+        scanner.disconnect()
     }
 
     override fun getName(): String {
@@ -24,7 +57,15 @@ class RNTFSModule(private val reactContext: ReactApplicationContext) : ReactCont
         constants["DIRECTORY_CACHE"] = reactContext.cacheDir.absolutePath
         constants["DIRECTORY_DOCUMENT"] = reactContext.filesDir.absolutePath
 
+        constants["DIRECTORY_DOWNLOAD"] = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath
+        constants["DIRECTORY_PICTURE"] = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).absolutePath
+        constants["DIRECTORY_MUSIC"] = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC).absolutePath
+        constants["DIRECTORY_MOVIE"] = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES).absolutePath
+
         constants["ERROR_CODE_FILE_NOT_FOUND"] = ERROR_CODE_FILE_NOT_FOUND
+        constants["ERROR_CODE_MD5_ALGORITHM_NOT_FOUND"] = ERROR_CODE_MD5_ALGORITHM_NOT_FOUND
+        constants["ERROR_CODE_MD5_CALCULATE_FAILURE"] = ERROR_CODE_MD5_CALCULATE_FAILURE
+        constants["ERROR_CODE_SCANNER_NOT_CONNECTED"] = ERROR_CODE_SCANNER_NOT_CONNECTED
 
         return constants
 
@@ -52,6 +93,7 @@ class RNTFSModule(private val reactContext: ReactApplicationContext) : ReactCont
         }
 
         val map = Arguments.createMap()
+        map.putString("name", file.name)
         map.putInt("size", file.length().toInt())
         // 如果用 toInt，貌似结果是错的
         map.putString("mtime", file.lastModified().toString())
@@ -88,6 +130,7 @@ class RNTFSModule(private val reactContext: ReactApplicationContext) : ReactCont
             MessageDigest.getInstance("MD5")
         }
         catch (e: NoSuchAlgorithmException) {
+            promise.reject(ERROR_CODE_MD5_ALGORITHM_NOT_FOUND, e.localizedMessage)
             return
         }
 
@@ -119,14 +162,31 @@ class RNTFSModule(private val reactContext: ReactApplicationContext) : ReactCont
 
         }
         catch (e: IOException) {
-            throw RuntimeException("Unable to process file for MD5", e)
+            promise.reject(ERROR_CODE_MD5_CALCULATE_FAILURE, e.localizedMessage)
         }
         finally {
             try {
                 inputStream.close()
-            } catch (e: IOException) {
-
             }
+            catch (e: IOException) {
+                promise.reject(ERROR_CODE_MD5_CALCULATE_FAILURE, e.localizedMessage)
+            }
+        }
+
+    }
+
+    @ReactMethod
+    fun scan(options: ReadableMap, promise: Promise) {
+
+        val path = options.getString("path") as String
+        val mimeType = options.getString("mimeType") as String
+
+        if (scanner.isConnected) {
+            scanTasks[path] = promise
+            scanner.scanFile(path, mimeType)
+        }
+        else {
+            promise.reject(ERROR_CODE_SCANNER_NOT_CONNECTED, "scanner is not connected.")
         }
 
     }
