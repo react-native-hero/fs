@@ -1,9 +1,11 @@
 #import "RNTFS.h"
 #include <CommonCrypto/CommonDigest.h>
 
-NSString *ERROR_CODE_FILE_NOT_FOUND = @"1";
+@implementation RNTFS
 
-BOOL checkFileExisted(NSString *path, RCTPromiseRejectBlock reject) {
+static NSString *ERROR_CODE_FILE_NOT_FOUND = @"1";
+
+static BOOL checkFileExisted(NSString *path, RCTPromiseRejectBlock reject) {
     BOOL existed = [NSFileManager.defaultManager fileExistsAtPath:path];
     if (!existed) {
         reject(ERROR_CODE_FILE_NOT_FOUND, @"file is not found.", nil);
@@ -11,8 +13,6 @@ BOOL checkFileExisted(NSString *path, RCTPromiseRejectBlock reject) {
     }
     return true;
 }
-
-@implementation RNTFS
 
 + (BOOL)requiresMainQueueSetup {
     return YES;
