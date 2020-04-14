@@ -181,6 +181,10 @@ class RNTFSModule(private val reactContext: ReactApplicationContext) : ReactCont
         val path = options.getString("path") as String
         val mimeType = options.getString("mimeType") as String
 
+        if (!checkFileExisted(File(path), promise)) {
+            return
+        }
+
         if (scanner.isConnected) {
             scanTasks[path] = promise
             scanner.scanFile(path, mimeType)

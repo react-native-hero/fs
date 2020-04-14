@@ -1,6 +1,6 @@
 {
   "name": "@react-native-hero/fs",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "react native fs",
   "main": "index.js",
   "scripts": {
