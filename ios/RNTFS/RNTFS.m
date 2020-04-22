@@ -1,4 +1,5 @@
 #import "RNTFS.h"
+#import <React/RCTConvert.h>
 #include <CommonCrypto/CommonDigest.h>
 
 @implementation RNTFS
@@ -102,6 +103,57 @@ RCT_EXPORT_METHOD(md5:(NSString *)path resolve:(RCTPromiseResolveBlock)resolve r
         @"md5": result,
     });
     
+}
+
+
+- (NSInteger)numberOfPreviewItemsInPreviewController:(QLPreviewController *)controller {
+    return 1;
+}
+
+- (id <QLPreviewItem>)previewController:(QLPreviewController *)controller previewItemAtIndex:(NSInteger)index {
+    return self.previewFileURL;
+}
+
+- (void)previewControllerDidDismiss:(QLPreviewController *)controller {
+    self.previewController = nil;
+    self.previewFileURL = nil;
+}
+
+RCT_EXPORT_METHOD(preview:(NSDictionary*)options
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+
+    NSString *path = [RCTConvert NSString:options[@"path"]];
+    if (!checkFileExisted(path, reject)) {
+        return;
+    }
+
+    self.previewFileURL = [NSURL fileURLWithPath:path];
+
+    RCTExecuteOnMainQueue(^{
+        
+        QLPreviewController *controller = [[QLPreviewController alloc] init];
+        self.previewController = controller;
+        
+        controller.dataSource = self;
+        controller.delegate = self;
+
+        UIViewController *root = RCTKeyWindow().rootViewController;
+        UIViewController *presented = RCTPresentedViewController();
+        
+        if (presented && root != presented) {
+            [root dismissViewControllerAnimated:YES completion:^ {
+                [root presentViewController:controller animated:YES completion:nil];
+                resolve(@{});
+            }];
+        }
+        else {
+            [root presentViewController:controller animated:YES completion:nil];
+            resolve(@{});
+        }
+        
+    });
+
 }
 
 @end

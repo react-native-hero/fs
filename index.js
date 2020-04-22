@@ -11,6 +11,7 @@ export const CODE = Platform.select({
     FILE_NOT_FOUND: RNTFS.ERROR_CODE_FILE_NOT_FOUND,
     MD5_ALGORITHM_NOT_FOUND: RNTFS.ERROR_CODE_MD5_ALGORITHM_NOT_FOUND,
     MD5_CALCULATE_FAILURE: RNTFS.ERROR_CODE_MD5_CALCULATE_FAILURE,
+    PREVIEW_APP_NOT_FOUND: RNTFS.ERROR_CODE_PREVIEW_APP_NOT_FOUND,
     SCANNER_NOT_CONNECTED: RNTFS.ERROR_CODE_SCANNER_NOT_CONNECTED,
   }
 })
@@ -56,6 +57,16 @@ export function unlink(path) {
  */
 export function md5(path) {
   return RNTFS.md5(path)
+}
+
+/**
+ * 预览文件
+ * 
+ * @param {string} options.path
+ * @param {string} options.mimeType
+ */
+export function preview(options) {
+  return RNTFS.preview(options)
 }
 
 /**

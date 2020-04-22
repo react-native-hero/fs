@@ -46,15 +46,18 @@ import {
   unlink,
   stat,
   md5,
+  preview,
 } from '@react-native-hero/fs'
 
-exists(path).then(data => {
+exists(path)
+.then(data => {
   if (data.exists) {
 
   }
 })
 
-stat(path).then(data => {
+stat(path)
+.then(data => {
   data.name
   data.size
 })
@@ -64,7 +67,8 @@ stat(path).then(data => {
   }
 })
 
-unlink(path).then(data => {
+unlink(path)
+.then(data => {
   if (data.success) {
 
   }
@@ -75,12 +79,29 @@ unlink(path).then(data => {
   }
 })
 
-md5(path).then(data => {
+md5(path)
+.then(data => {
   data.md5
 })
 .catch(err => {
   if (err.code === CODE.FILE_NOT_FOUND) {
     console.log('file is not found')
+  }
+})
+
+preview({
+  path: '/xx/xx.pdf',
+  mimeType: 'application/pdf',
+})
+.then(() => {
+  // success
+})
+.catch(err => {
+  if (err.code === CODE.FILE_NOT_FOUND) {
+    console.log('file is not found')
+  }
+  else if (err.code === CODE.PREVIEW_APP_NOT_FOUND) {
+    console.log('preview app is not found')
   }
 })
 
