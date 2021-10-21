@@ -55,17 +55,17 @@ class RNTFSModule(private val reactContext: ReactApplicationContext) : ReactCont
         return "RNTFS"
     }
 
-    override fun getConstants(): Map<String, Any>? {
+    override fun getConstants(): Map<String, Any> {
 
         val constants: MutableMap<String, Any> = HashMap()
 
         constants["DIRECTORY_CACHE"] = reactContext.cacheDir.absolutePath
         constants["DIRECTORY_DOCUMENT"] = reactContext.filesDir.absolutePath
 
-        constants["DIRECTORY_DOWNLOAD"] = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath
-        constants["DIRECTORY_PICTURE"] = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).absolutePath
-        constants["DIRECTORY_MUSIC"] = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC).absolutePath
-        constants["DIRECTORY_MOVIE"] = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES).absolutePath
+        constants["DIRECTORY_DOWNLOAD"] = reactContext.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)?.absolutePath ?: ""
+        constants["DIRECTORY_PICTURE"] = reactContext.getExternalFilesDir(Environment.DIRECTORY_PICTURES)?.absolutePath ?: ""
+        constants["DIRECTORY_MUSIC"] = reactContext.getExternalFilesDir(Environment.DIRECTORY_MUSIC)?.absolutePath ?: ""
+        constants["DIRECTORY_MOVIE"] = reactContext.getExternalFilesDir(Environment.DIRECTORY_MOVIES)?.absolutePath ?: ""
 
         constants["ERROR_CODE_FILE_NOT_FOUND"] = ERROR_CODE_FILE_NOT_FOUND
         constants["ERROR_CODE_MD5_ALGORITHM_NOT_FOUND"] = ERROR_CODE_MD5_ALGORITHM_NOT_FOUND
