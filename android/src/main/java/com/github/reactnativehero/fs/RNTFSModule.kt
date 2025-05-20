@@ -4,7 +4,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.MediaScannerConnection
 import android.net.Uri
-import android.os.Build
 import android.os.Environment
 import androidx.core.content.FileProvider
 import com.facebook.react.bridge.*
@@ -46,8 +45,8 @@ class RNTFSModule(private val reactContext: ReactApplicationContext) : ReactCont
         scanner.connect()
     }
 
-    override fun onCatalystInstanceDestroy() {
-        super.onCatalystInstanceDestroy()
+    override fun invalidate() {
+        super.invalidate()
         scanner.disconnect()
     }
 
@@ -189,7 +188,7 @@ class RNTFSModule(private val reactContext: ReactApplicationContext) : ReactCont
         val path = options.getString("path")
         val mimeType = options.getString("mimeType")
 
-        val file = File(path)
+        val file = File(path!!)
         if (!checkFileExisted(file, promise)) {
             return
         }
@@ -197,16 +196,9 @@ class RNTFSModule(private val reactContext: ReactApplicationContext) : ReactCont
         val intent = Intent(Intent.ACTION_VIEW)
         intent.addCategory(Intent.CATEGORY_DEFAULT)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            val uri = FileProvider.getUriForFile(activity, reactApplicationContext.packageName + ".provider", file)
-            intent.setDataAndType(uri, mimeType)
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        else {
-            val uri = Uri.fromFile(file)
-            intent.setDataAndType(uri, mimeType)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
+        val uri = FileProvider.getUriForFile(activity, reactApplicationContext.packageName + ".provider", file)
+        intent.setDataAndType(uri, mimeType)
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
         val list = reactContext.packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY)
         if (list.size > 0) {
