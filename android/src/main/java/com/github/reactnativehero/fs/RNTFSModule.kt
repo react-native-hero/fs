@@ -1,17 +1,23 @@
 package com.github.reactnativehero.fs
 
+import android.content.ContentResolver
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Environment
+import android.os.FileUtils
+import android.provider.MediaStore
 import androidx.core.content.FileProvider
 import com.facebook.react.bridge.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import java.io.*
 import java.math.BigInteger
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.util.*
+import androidx.core.net.toUri
 
 class RNTFSModule(private val reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
 
@@ -21,6 +27,7 @@ class RNTFSModule(private val reactContext: ReactApplicationContext) : ReactCont
         private const val ERROR_CODE_MD5_CALCULATE_FAILURE = "3"
         private const val ERROR_CODE_PREVIEW_APP_NOT_FOUND = "4"
         private const val ERROR_CODE_SCANNER_NOT_CONNECTED = "5"
+        private const val ERROR_CODE_COPY_FAILURE = "6"
     }
 
     private var scanner: MediaScannerConnection
@@ -71,6 +78,7 @@ class RNTFSModule(private val reactContext: ReactApplicationContext) : ReactCont
         constants["ERROR_CODE_MD5_CALCULATE_FAILURE"] = ERROR_CODE_MD5_CALCULATE_FAILURE
         constants["ERROR_CODE_PREVIEW_APP_NOT_FOUND"] = ERROR_CODE_PREVIEW_APP_NOT_FOUND
         constants["ERROR_CODE_SCANNER_NOT_CONNECTED"] = ERROR_CODE_SCANNER_NOT_CONNECTED
+        constants["ERROR_CODE_COPY_FAILURE"] = ERROR_CODE_COPY_FAILURE
 
         return constants
 
@@ -82,7 +90,7 @@ class RNTFSModule(private val reactContext: ReactApplicationContext) : ReactCont
         val file = File(path)
 
         val map = Arguments.createMap()
-        map.putBoolean("existed", file.exists())
+        map.putBoolean("exists", file.exists())
 
         promise.resolve(map)
 
@@ -185,10 +193,10 @@ class RNTFSModule(private val reactContext: ReactApplicationContext) : ReactCont
 
         val activity = reactContext.currentActivity ?: return
 
-        val path = options.getString("path")
+        val path = options.getString("path") as String
         val mimeType = options.getString("mimeType")
 
-        val file = File(path!!)
+        val file = File(path)
         if (!checkFileExisted(file, promise)) {
             return
         }
@@ -230,6 +238,93 @@ class RNTFSModule(private val reactContext: ReactApplicationContext) : ReactCont
             promise.reject(ERROR_CODE_SCANNER_NOT_CONNECTED, "scanner is not connected.")
         }
 
+    }
+
+    /**
+     * 将 content:// URI 指向的文件复制到应用缓存目录
+     * @param options 包含 "uri"（String）和可选的 "fileName"（String）
+     * @param promise 返回复制后的文件绝对路径
+     */
+    @ReactMethod
+    fun copy(options: ReadableMap, promise: Promise) {
+        val uriString = options.getString("uri") as String
+        val sourceUri = uriString.toUri()
+        try {
+            val fileName = options.getString("name")?.takeIf { it.isNotEmpty() }
+                ?: getFileNameFromUri(sourceUri)
+
+            // 2. 准备目标文件（缓存目录）
+            val cacheDir = reactContext.cacheDir
+            val destFile = File(cacheDir, fileName)
+
+            // 3. 在后台线程执行复制（避免阻塞 UI）
+            CoroutineScope(Dispatchers.IO).run {
+                try {
+                    val contentResolver: ContentResolver = reactContext.contentResolver
+                    contentResolver.openInputStream(sourceUri)?.use { inputStream ->
+                        FileOutputStream(destFile).use { outputStream ->
+                            // 使用 FileUtils 或手动复制
+                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                                FileUtils.copy(inputStream, outputStream)
+                            } else {
+                                inputStream.copyTo(outputStream)
+                            }
+                        }
+                    } ?: throw IOException("Unable to open input stream for URI: $uriString")
+
+                    // 复制成功，返回绝对路径
+                    val map = Arguments.createMap()
+                    map.putString("path", destFile.absolutePath)
+                    map.putString("name", destFile.name)
+                    map.putInt("size", destFile.length().toInt())
+                    promise.resolve(map)
+                } catch (e: Exception) {
+                    promise.reject(ERROR_CODE_COPY_FAILURE, e.message, e)
+                }
+            }
+        } catch (e: Exception) {
+            promise.reject(ERROR_CODE_COPY_FAILURE, e.message, e)
+        }
+    }
+
+    /**
+     * 从 content:// URI 获取原始文件名
+     */
+    private fun getFileNameFromUri(uri: Uri): String {
+        // 尝试通过 ContentResolver 获取 DISPLAY_NAME
+        if (uri.scheme == "content") {
+            val cursor = reactContext.contentResolver.query(
+                uri,
+                arrayOf(MediaStore.MediaColumns.DISPLAY_NAME),
+                null,
+                null,
+                null
+            )
+            cursor?.use {
+                if (it.moveToFirst()) {
+                    val nameIndex = it.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME)
+                    if (nameIndex != -1) {
+                        val name = it.getString(nameIndex)
+                        if (!name.isNullOrBlank()) {
+                            return name
+                        }
+                    }
+                }
+            }
+        }
+
+        // 降级方案：从路径最后一段截取
+        val path = uri.path
+        if (path != null) {
+            val segments = path.split("/")
+            val last = segments.lastOrNull()
+            if (!last.isNullOrBlank()) {
+                return last
+            }
+        }
+
+        // 保底方案：生成随机文件名
+        return "file_${System.currentTimeMillis()}"
     }
 
     private fun checkFileExisted(file: File, promise: Promise): Boolean {

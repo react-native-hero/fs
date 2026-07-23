@@ -13,6 +13,7 @@ export const CODE = Platform.select({
     MD5_CALCULATE_FAILURE: RNTFS.ERROR_CODE_MD5_CALCULATE_FAILURE,
     PREVIEW_APP_NOT_FOUND: RNTFS.ERROR_CODE_PREVIEW_APP_NOT_FOUND,
     SCANNER_NOT_CONNECTED: RNTFS.ERROR_CODE_SCANNER_NOT_CONNECTED,
+    COPY_FAILURE: RNTFS.ERROR_CODE_COPY_FAILURE,
   }
 })
 
@@ -61,7 +62,7 @@ export function md5(path) {
 
 /**
  * 预览文件
- * 
+ *
  * @param {string} options.path
  * @param {string} options.mimeType
  */
@@ -78,5 +79,20 @@ export const scan = Platform.select({
   },
   android(options) {
     return RNTFS.scan(options)
+  }
+})
+
+/**
+ * 复制文件
+ *
+ * @param {string} options.uri
+ * @param {string} options.name
+ */
+export const copy = Platform.select({
+  ios() {
+    throw new Error('copy can be called on android only.')
+  },
+  android(options) {
+    return RNTFS.copy(options)
   }
 })

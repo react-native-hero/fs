@@ -47,6 +47,9 @@ import {
   stat,
   md5,
   preview,
+  // 安卓专用
+  scan,
+  copy,
 } from '@react-native-hero/fs'
 
 exists(path)
@@ -116,6 +119,20 @@ scan({
 .catch(err => {
   if (err.code === CODE.SCANNER_NOT_CONNECTED) {
     console.log('scanner is not connected.')
+  }
+})
+
+// android only
+copy({
+  uri: 'content:// 开头的文件路径',
+  name: '支持改写文件名，可不传',
+})
+.then(data => {
+  data.path
+})
+.catch(err => {
+  if (err.code === CODE.COPY_FAILURE) {
+    console.log('copy failure.')
   }
 })
 ```
