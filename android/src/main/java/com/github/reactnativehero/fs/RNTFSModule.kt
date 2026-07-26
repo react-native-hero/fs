@@ -209,10 +209,37 @@ class RNTFSModule(private val reactContext: ReactApplicationContext) : ReactCont
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
         val list = reactContext.packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY)
-        if (list.size > 0) {
-            activity.startActivity(intent)
-            val map = Arguments.createMap()
-            promise.resolve(map)
+        // 排除本 App，避免预览时选自己又走「接收外部文件」转圈无下文
+        val otherApps = list.filter {
+            it.activityInfo.packageName != reactApplicationContext.packageName
+        }
+
+        if (otherApps.isNotEmpty()) {
+            for (info in otherApps) {
+                reactApplicationContext.grantUriPermission(
+                    info.activityInfo.packageName,
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            }
+
+            val chooser = Intent.createChooser(intent, null)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                val excluded = list
+                    .filter { it.activityInfo.packageName == reactApplicationContext.packageName }
+                    .map {
+                        android.content.ComponentName(
+                            it.activityInfo.packageName,
+                            it.activityInfo.name
+                        )
+                    }
+                    .toTypedArray()
+                if (excluded.isNotEmpty()) {
+                    chooser.putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, excluded)
+                }
+            }
+            activity.startActivity(chooser)
+            promise.resolve(Arguments.createMap())
         }
         else {
             promise.reject(ERROR_CODE_PREVIEW_APP_NOT_FOUND, "preview app is not found.")
